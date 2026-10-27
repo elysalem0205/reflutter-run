@@ -15,7 +15,7 @@ jobs:
           zipalign -p -f 4 release.RE.apk aligned.apk
           keytool -genkey -v -keystore key.jks -alias alias -keyalg RSA -keysize 2048 -validity 10000 -storepass pass123 -keypass pass123 -dname "CN=Test"
           apksigner sign --ks key.jks --ks-pass pass:pass123 --key-pass pass:pass123 --out signed.apk aligned.apk
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: patched-apk
           path: signed.apk
