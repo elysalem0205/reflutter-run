@@ -1,0 +1,16 @@
+name: Analyze
+on: [push]
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract and analyze
+        run: |
+          unzip -o Medrastak_7.0.0_apks.apk "lib/armeabi-v7a/libapp.so" -d extracted/
+          strings extracted/lib/armeabi-v7a/libapp.so | grep -i "subscri\|paid\|licens\|premium\|trial\|isActive\|isPaid\|مشترك\|اشتراك" > result.txt
+          strings extracted/lib/armeabi-v7a/libapp.so | grep -i "medrastak\|api\|auth\|token\|user" >> result.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: strings-result
+          path: result.txt
