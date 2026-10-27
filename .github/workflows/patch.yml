@@ -5,24 +5,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Extract APK
-        run: unzip -o Medrastak_7.0.0_apks.apk -d apk_dir/
-
-      - name: Patch SO
+      - name: Patch
         run: |
+          unzip -o Medrastak_7.0.0_apks.apk -d apk_dir/
           cp apk_dir/lib/armeabi-v7a/libapp.so libapp.so
           python3 patch.py
           cp libapp_patched.so apk_dir/lib/armeabi-v7a/libapp.so
-
-      - name: Repack and Sign
-        run: |
-          sudo apt-get install -y apksigner zipalign
+          rm -rf apk_dir/META-INF/
           cd apk_dir && zip -r ../rebuilt.apk . && cd ..
+          sudo apt-get install -y apksigner zipalign
           zipalign -p -f 4 rebuilt.apk aligned.apk
-          keytool -genkey -v -keystore key.jks -alias a -keyalg RSA -keysize 2048 -validity 9999 -storepass p -keypass p -dname "CN=x"
-          apksigner sign --ks key.jks --ks-pass pass:p --key-pass pass:p --out final.apk aligned.apk
-
+          keytool -genkey -v -keystore k.jks -alias a -keyalg RSA -keysize 2048 -validity 9999 -storepass p -keypass p -dname "CN=x"
+          apksigner sign --ks k.jks --ks-pass pass:p --key-pass pass:p --out final.apk aligned.apk
       - uses: actions/upload-artifact@v4
         with:
           name: final-apk
