@@ -1,0 +1,34 @@
+name: Patch
+on: [push]
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract SO
+        run: unzip -o Medrastak_7.0.0_apks.apk "lib/armeabi-v7a/libapp.so" -d ex/
+      - name: Patch
+        run: |
+          cp ex/lib/armeabi-v7a/libapp.so libapp.so
+          python3 patch.py
+      - name: Repack APK
+        run: |
+          cp Medrastak_7.0.0_apks.apk patched.apk
+          zip patched.apk lib/armeabi-v7a/libapp.so -j
+          cd ex && zip ../patched.apk lib/armeabi-v7a/libapp_patched.so
+          cp ex/lib/armeabi-v7a/libapp_patched.so libapp.so
+          zip -j patched.apk libapp.so
+      - name: Repack and resign
+        run: |
+          sudo apt-get install -y apksigner zipalign
+          cp Medrastak_7.0.0_apks.apk work.apk
+          unzip -o work.apk -d apk_dir/
+          cp ex/lib/armeabi-v7a/libapp_patched.so apk_dir/lib/armeabi-v7a/libapp.so
+          cd apk_dir && zip -r ../rebuilt.apk . && cd ..
+          zipalign -p -f 4 rebuilt.apk aligned.apk
+          keytool -genkey -v -keystore key.jks -alias a -keyalg RSA -keysize 2048 -validity 9999 -storepass p -keypass p -dname "CN=x"
+          apksigner sign --ks key.jks --ks-pass pass:p --key-pass pass:p --out final.apk aligned.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-apk
+          path: final.apk
